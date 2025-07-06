@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Brain, Zap, TrendingUp, Users, CheckCircle, AlertTriangle } from 'lucide-react';
 import { ClassData, ScheduledClass } from '../types';
@@ -44,7 +43,17 @@ const EnhancedOptimizerModal: React.FC<EnhancedOptimizerModalProps> = ({
 
     try {
       const optimizationResults = await aiService.generateOptimizationIterations(csvData, optimizationType);
-      setIterations(optimizationResults);
+      // Transform the results to match our local interface
+      const transformedResults: OptimizationIteration[] = optimizationResults.map((result, index) => ({
+        iteration: index + 1,
+        schedule: result.schedule,
+        metrics: {
+          expectedRevenue: result.metrics.totalRevenue || 0,
+          expectedAttendance: result.metrics.totalParticipants || 0,
+        },
+        reasoning: `Optimization iteration ${index + 1} for ${optimizationType} strategy`
+      }));
+      setIterations(transformedResults);
     } catch (error) {
       console.error('Optimization failed:', error);
     } finally {

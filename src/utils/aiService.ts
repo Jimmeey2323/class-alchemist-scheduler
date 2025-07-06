@@ -113,7 +113,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -178,7 +178,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -240,7 +240,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -277,7 +277,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -312,7 +312,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -383,7 +383,7 @@ class AIService {
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-2025-04-14',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       });
@@ -410,7 +410,7 @@ class AIService {
     }
   }
 
-  // Find and fix the Promise return issue around line 405
+  // Fix the Promise return issue
   public generateIntelligentSchedule = async (
     csvData: ClassData[],
     customTeachers: CustomTeacher[] = [],
@@ -427,12 +427,3 @@ class AIService {
 }
 
 export const aiService = new AIService();
-export { generateOptimizationIterations } from './aiService';
-
-// Export function directly for backwards compatibility
-export const generateOptimizationIterations = (
-  csvData: ClassData[],
-  optimizationType: 'revenue' | 'attendance' | 'balanced' = 'balanced'
-) => {
-  return aiService.generateOptimizationIterations(csvData, optimizationType);
-};
