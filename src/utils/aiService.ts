@@ -56,6 +56,7 @@ class AIService {
     this.openai = new OpenAI({
       apiKey: provider.key,
       baseURL: provider.endpoint,
+      dangerouslyAllowBrowser: true
     });
   }
 
@@ -75,6 +76,16 @@ class AIService {
         endpoint: savedEndpoint,
       });
     }
+  }
+
+  // Add the missing generateRecommendations method
+  async generateRecommendations(
+    csvData: ClassData[],
+    day: string,
+    timeSlot: string,
+    location: string
+  ): Promise<AIRecommendation[]> {
+    return this.generateClassRecommendations(csvData, location, day, timeSlot);
   }
 
   async generateClassRecommendations(
@@ -416,3 +427,12 @@ class AIService {
 }
 
 export const aiService = new AIService();
+export { generateOptimizationIterations } from './aiService';
+
+// Export function directly for backwards compatibility
+export const generateOptimizationIterations = (
+  csvData: ClassData[],
+  optimizationType: 'revenue' | 'attendance' | 'balanced' = 'balanced'
+) => {
+  return aiService.generateOptimizationIterations(csvData, optimizationType);
+};
