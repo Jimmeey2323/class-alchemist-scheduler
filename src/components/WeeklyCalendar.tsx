@@ -29,6 +29,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [showDayView, setShowDayView] = useState(false);
   const [currentSlotIndex, setCurrentSlotIndex] = useState<Record<string, number>>({});
+  const [showRestrictedSlots, setShowRestrictedSlots] = useState(false); // Collapsed by default
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
@@ -36,6 +37,11 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   const availableTimeSlots = getAvailableTimeSlots('Monday'); // Same for all days
   const restrictedTimeSlots = getRestrictedTimeSlots();
   const allTimeSlots = [...availableTimeSlots, ...restrictedTimeSlots].sort();
+
+  // Filter time slots based on collapsed state
+  const visibleTimeSlots = showRestrictedSlots 
+    ? allTimeSlots 
+    : availableTimeSlots;
 
   const priorityTeachers = ['Anisha', 'Vivaran', 'Mrigakshi', 'Pranjali', 'Atulan', 'Cauveri', 'Rohan'];
   const timeSlotsWithData = getTimeSlotsWithData(csvData, location);
@@ -192,13 +198,17 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         }}
         className={`relative h-32 border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group ${
           scheduledClassesInSlot.length > 0
-            ? 'bg-gradient-to-br from-green-400/20 to-emerald-500/20 hover:from-green-400/30 hover:to-emerald-500/30 border-green-400/50'
+            ? isDarkMode 
+              ? 'bg-gradient-to-br from-green-400/20 to-emerald-500/20 hover:from-green-400/30 hover:to-emerald-500/30 border-green-400/50'
+              : 'bg-gradient-to-br from-green-100 to-emerald-100 hover:from-green-200 hover:to-emerald-200 border-green-300'
             : isRestricted
-              ? 'bg-gradient-to-br from-red-400/10 to-orange-500/10 hover:from-red-400/20 hover:to-orange-500/20 border-red-400/30'
+              ? isDarkMode
+                ? 'bg-gradient-to-br from-red-400/10 to-orange-500/10 hover:from-red-400/20 hover:to-orange-500/20 border-red-400/30'
+                : 'bg-gradient-to-br from-red-50 to-orange-50 hover:from-red-100 hover:to-orange-100 border-red-200'
               : historicData 
                 ? isDarkMode
                   ? 'bg-gradient-to-br from-blue-400/10 to-cyan-500/10 hover:from-blue-400/20 hover:to-cyan-500/20 border-blue-400/30 border-gray-600' 
-                  : 'bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-blue-200'
+                  : 'bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200'
                 : isDarkMode
                   ? 'bg-gray-800/30 hover:bg-gray-700/50 border-gray-600'
                   : 'bg-white hover:bg-gray-50 border-gray-300'
@@ -207,7 +217,9 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         {/* Restricted Time Indicator */}
         {isRestricted && scheduledClassesInSlot.length === 0 && (
           <div className="absolute top-1 left-1 z-10">
-            <div className="flex items-center bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs">
+            <div className={`flex items-center px-2 py-1 rounded text-xs ${
+              isDarkMode ? 'bg-red-500/20 text-red-300' : 'bg-red-100 text-red-600'
+            }`}>
               <Shield className="h-3 w-3 mr-1" />
               <span>Private Only</span>
             </div>
@@ -251,17 +263,25 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 onClick={(e) => handleClassClick(e, currentClass)}
                 className={`p-2 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all duration-200 h-full ${
                   currentClass.isTopPerformer 
-                    ? 'bg-yellow-400/20 border-yellow-400 hover:bg-yellow-400/30' 
+                    ? isDarkMode
+                      ? 'bg-yellow-400/20 border-yellow-400 hover:bg-yellow-400/30'
+                      : 'bg-yellow-100 border-yellow-500 hover:bg-yellow-200'
                     : currentClass.isPrivate 
-                    ? 'bg-purple-400/20 border-purple-400 hover:bg-purple-400/30'
-                    : 'bg-green-400/20 border-green-400 hover:bg-green-400/30'
+                    ? isDarkMode
+                      ? 'bg-purple-400/20 border-purple-400 hover:bg-purple-400/30'
+                      : 'bg-purple-100 border-purple-500 hover:bg-purple-200'
+                    : isDarkMode
+                      ? 'bg-green-400/20 border-green-400 hover:bg-green-400/30'
+                      : 'bg-green-100 border-green-500 hover:bg-green-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className={`text-xs font-semibold truncate flex-1 ${
-                    currentClass.isTopPerformer ? 'text-yellow-200' : 
-                    currentClass.isPrivate ? 'text-purple-200' :
-                    'text-green-200'
+                    currentClass.isTopPerformer 
+                      ? isDarkMode ? 'text-yellow-200' : 'text-yellow-700'
+                      : currentClass.isPrivate 
+                      ? isDarkMode ? 'text-purple-200' : 'text-purple-700'
+                      : isDarkMode ? 'text-green-200' : 'text-green-700'
                   }`}>
                     {currentClass.classFormat}
                   </div>
@@ -277,9 +297,11 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                   <div className="flex items-center">
                     {getTeacherAvatar(`${currentClass.teacherFirstName} ${currentClass.teacherLastName}`)}
                     <div className={`ml-2 text-xs truncate ${
-                      currentClass.isTopPerformer ? 'text-yellow-300' : 
-                      currentClass.isPrivate ? 'text-purple-300' :
-                      'text-green-300'
+                      currentClass.isTopPerformer 
+                        ? isDarkMode ? 'text-yellow-300' : 'text-yellow-600'
+                        : currentClass.isPrivate 
+                        ? isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                        : isDarkMode ? 'text-green-300' : 'text-green-600'
                     }`}>
                       {currentClass.teacherFirstName}
                     </div>
@@ -310,9 +332,9 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         {isRestricted && scheduledClassesInSlot.length === 0 && (
           <div className="absolute inset-0 p-2 flex items-center justify-center">
             <div className="text-center">
-              <AlertTriangle className="h-4 w-4 text-red-400 mx-auto mb-1" />
-              <div className="text-xs text-red-300 font-medium">Restricted</div>
-              <div className="text-xs text-red-400">Private Only</div>
+              <AlertTriangle className={`h-4 w-4 mx-auto mb-1 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} />
+              <div className={`text-xs font-medium ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>Restricted</div>
+              <div className={`text-xs ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>Private Only</div>
             </div>
           </div>
         )}
@@ -321,14 +343,14 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         {historicData && scheduledClassesInSlot.length === 0 && !isRestricted && (
           <div className="absolute inset-0 p-2 flex items-center justify-center">
             <div className="text-center">
-              <div className={`text-xs font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+              <div className={`text-xs font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
                 {historicData.count} classes
               </div>
-              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 {historicData.avgParticipants} avg
               </div>
               <div className="flex justify-center mt-1">
-                <div className={`w-2 h-2 rounded-full opacity-60 ${isDarkMode ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full opacity-60 ${isDarkMode ? 'bg-blue-400' : 'bg-blue-600'}`}></div>
               </div>
             </div>
           </div>
@@ -521,59 +543,109 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   return (
     <>
       <div className={`${cardBg} backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border ${borderColor}`}>
-        <div className={`p-6 bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-b ${borderColor}`}>
+        <div className={`p-6 border-b ${borderColor} ${
+          isDarkMode 
+            ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30' 
+            : 'bg-gradient-to-r from-blue-900 to-indigo-900'
+        }`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className={`text-2xl font-bold ${textPrimary}`}>{location}</h2>
-              <p className={textSecondary}>Weekly Schedule Overview</p>
+              <h2 className={`text-2xl font-bold ${isDarkMode ? textPrimary : 'text-white'}`}>{location}</h2>
+              <p className={isDarkMode ? textSecondary : 'text-blue-100'}>Weekly Schedule Overview</p>
             </div>
             
             {/* Location Summary Stats */}
             <div className="grid grid-cols-4 gap-4 text-center">
-              <div className="bg-blue-500/20 p-3 rounded-lg border border-blue-500/30">
-                <div className={`text-lg font-bold ${textPrimary}`}>{totalClasses}</div>
-                <div className="text-xs text-blue-300">Total Classes</div>
+              <div className={`p-3 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-blue-500/20 border-blue-500/30' 
+                  : 'bg-white/10 border-white/20 backdrop-blur-sm'
+              }`}>
+                <div className={`text-lg font-bold ${isDarkMode ? textPrimary : 'text-white'}`}>{totalClasses}</div>
+                <div className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-100'}`}>Total Classes</div>
               </div>
-              <div className="bg-yellow-500/20 p-3 rounded-lg border border-yellow-500/30">
-                <div className={`text-lg font-bold ${textPrimary}`}>{topPerformers}</div>
-                <div className="text-xs text-yellow-300">Top Performers</div>
+              <div className={`p-3 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-yellow-500/20 border-yellow-500/30' 
+                  : 'bg-white/10 border-white/20 backdrop-blur-sm'
+              }`}>
+                <div className={`text-lg font-bold ${isDarkMode ? textPrimary : 'text-white'}`}>{topPerformers}</div>
+                <div className={`text-xs ${isDarkMode ? 'text-yellow-300' : 'text-yellow-100'}`}>Top Performers</div>
               </div>
-              <div className="bg-purple-500/20 p-3 rounded-lg border border-purple-500/30">
-                <div className={`text-lg font-bold ${textPrimary}`}>{privateClasses}</div>
-                <div className="text-xs text-purple-300">Private Classes</div>
+              <div className={`p-3 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-purple-500/20 border-purple-500/30' 
+                  : 'bg-white/10 border-white/20 backdrop-blur-sm'
+              }`}>
+                <div className={`text-lg font-bold ${isDarkMode ? textPrimary : 'text-white'}`}>{privateClasses}</div>
+                <div className={`text-xs ${isDarkMode ? 'text-purple-300' : 'text-purple-100'}`}>Private Classes</div>
               </div>
-              <div className="bg-green-500/20 p-3 rounded-lg border border-green-500/30">
-                <div className={`text-lg font-bold ${textPrimary}`}>{avgParticipants}</div>
-                <div className="text-xs text-green-300">Avg Participants</div>
+              <div className={`p-3 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-green-500/20 border-green-500/30' 
+                  : 'bg-white/10 border-white/20 backdrop-blur-sm'
+              }`}>
+                <div className={`text-lg font-bold ${isDarkMode ? textPrimary : 'text-white'}`}>{avgParticipants}</div>
+                <div className={`text-xs ${isDarkMode ? 'text-green-300' : 'text-green-100'}`}>Avg Participants</div>
               </div>
             </div>
+          </div>
+
+          {/* Restricted Time Slots Toggle */}
+          <div className="mb-4">
+            <button
+              onClick={() => setShowRestrictedSlots(!showRestrictedSlots)}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-gray-700/50 hover:bg-gray-600/50' 
+                  : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
+              }`}
+            >
+              <Shield className="h-4 w-4 mr-2 text-red-400" />
+              <span className={isDarkMode ? textPrimary : 'text-white'}>
+                {showRestrictedSlots ? 'Hide' : 'Show'} Restricted Time Slots
+              </span>
+              {showRestrictedSlots ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+            </button>
           </div>
 
           {/* Class Mix Display */}
           <div className="mb-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center px-4 py-2 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50' : 'bg-gray-100 hover:bg-gray-200'} rounded-lg transition-colors`}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-gray-700/50 hover:bg-gray-600/50' 
+                  : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
+              }`}
             >
               <Filter className="h-4 w-4 mr-2 text-blue-400" />
-              <span className={textPrimary}>Class Mix & Filters</span>
+              <span className={isDarkMode ? textPrimary : 'text-white'}>Class Mix & Filters</span>
               {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
             </button>
             
             {showFilters && (
-              <div className={`mt-4 p-4 ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50'} rounded-lg border ${borderColor}`}>
+              <div className={`mt-4 p-4 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-gray-800/30 border-gray-600' 
+                  : 'bg-white/10 border-white/20 backdrop-blur-sm'
+              }`}>
                 {/* Class Mix by Day */}
                 <div className="mb-6">
-                  <h4 className={`text-sm font-medium ${textSecondary} mb-3`}>Class Mix by Day</h4>
+                  <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? textSecondary : 'text-blue-100'}`}>Class Mix by Day</h4>
                   <div className="grid grid-cols-7 gap-2">
                     {days.map(day => (
-                      <div key={day} className={`p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${borderColor}`}>
-                        <div className={`text-sm font-medium ${textPrimary} mb-2`}>{day.slice(0, 3)}</div>
+                      <div key={day} className={`p-3 rounded-lg border ${
+                        isDarkMode 
+                          ? 'bg-gray-800 border-gray-600' 
+                          : 'bg-white/10 border-white/20 backdrop-blur-sm'
+                      }`}>
+                        <div className={`text-sm font-medium mb-2 ${isDarkMode ? textPrimary : 'text-white'}`}>{day.slice(0, 3)}</div>
                         <div className="space-y-1">
                           {Object.entries(classMixByDay[day] || {}).map(([format, count]) => (
                             <div key={format} className="text-xs">
-                              <span className={textSecondary}>{format.split(' ').slice(-1)[0]}:</span>
-                              <span className={`ml-1 ${textPrimary}`}>{count}</span>
+                              <span className={isDarkMode ? textSecondary : 'text-blue-200'}>{format.split(' ').slice(-1)[0]}:</span>
+                              <span className={`ml-1 ${isDarkMode ? textPrimary : 'text-white'}`}>{count}</span>
                             </div>
                           ))}
                         </div>
@@ -585,13 +657,17 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={`block text-sm font-medium ${textSecondary} mb-2`}>
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? textSecondary : 'text-blue-100'}`}>
                       Date Range
                     </label>
                     <select
                       value={dateRange}
                       onChange={(e) => setDateRange(e.target.value)}
-                      className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-800 border-gray-600 text-white' 
+                          : 'bg-white/20 border-white/30 text-white backdrop-blur-sm placeholder-white/70'
+                      }`}
                     >
                       <option value="all">All Time</option>
                       <option value="last30">Last 30 Days</option>
@@ -602,14 +678,18 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                   </div>
                   
                   <div>
-                    <label className={`block text-sm font-medium ${textSecondary} mb-2`}>
+                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? textSecondary : 'text-blue-100'}`}>
                       Min Participants
                     </label>
                     <input
                       type="number"
                       value={minParticipants}
                       onChange={(e) => setMinParticipants(parseInt(e.target.value) || 0)}
-                      className={`w-full px-3 py-2 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-800 border-gray-600 text-white' 
+                          : 'bg-white/20 border-white/30 text-white backdrop-blur-sm placeholder-white/70'
+                      }`}
                       placeholder="0"
                       min="0"
                     />
@@ -621,7 +701,11 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                         setDateRange('all');
                         setMinParticipants(0);
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        isDarkMode 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-800 text-white hover:bg-blue-900'
+                      }`}
                     >
                       Reset Filters
                     </button>
@@ -634,27 +718,27 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           <div className="flex items-center space-x-6 text-sm">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-amber-500 rounded mr-2"></div>
-              <span className={textSecondary}>Top Performer</span>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Top Performer</span>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gradient-to-r from-purple-400 to-pink-500 rounded mr-2"></div>
-              <span className={textSecondary}>Private Class</span>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Private Class</span>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded mr-2"></div>
-              <span className={textSecondary}>Regular Class</span>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Regular Class</span>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 bg-gradient-to-r from-red-400 to-orange-500 rounded mr-2"></div>
-              <span className={textSecondary}>Restricted (Private Only)</span>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Restricted (Private Only)</span>
             </div>
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded mr-2 ${isDarkMode ? 'bg-gradient-to-r from-blue-400 to-cyan-500' : 'bg-blue-200'}`}></div>
-              <span className={textSecondary}>Historic Data</span>
+              <div className={`w-3 h-3 rounded mr-2 ${isDarkMode ? 'bg-gradient-to-r from-blue-400 to-cyan-500' : 'bg-blue-300'}`}></div>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Historic Data</span>
             </div>
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded mr-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}></div>
-              <span className={textSecondary}>Available</span>
+              <div className={`w-3 h-3 rounded mr-2 ${isDarkMode ? 'bg-gray-600' : 'bg-blue-200'}`}></div>
+              <span className={isDarkMode ? textSecondary : 'text-blue-100'}>Available</span>
             </div>
           </div>
         </div>
@@ -663,7 +747,11 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           <div className="min-w-full">
             {/* Header */}
             <div className="grid grid-cols-8 bg-gray-800/50">
-              <div className={`p-4 text-sm font-semibold ${textSecondary} border-b ${borderColor} ${isDarkMode ? 'bg-gray-800/70' : 'bg-gray-100'}`}>
+              <div className={`p-4 text-sm font-semibold border-b ${borderColor} ${
+                isDarkMode 
+                  ? 'bg-gray-800/70 text-gray-300' 
+                  : 'bg-blue-900 text-blue-100'
+              }`}>
                 <Clock className="h-4 w-4 inline mr-2" />
                 Time
               </div>
@@ -671,13 +759,19 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 <div 
                   key={day} 
                   onClick={() => handleDayClick(day)}
-                  className={`p-4 text-sm font-semibold ${textSecondary} border-b ${borderColor} text-center ${isDarkMode ? 'bg-gray-800/70 hover:bg-gray-700/70' : 'bg-gray-100 hover:bg-gray-200'} cursor-pointer transition-colors group`}
+                  className={`p-4 text-sm font-semibold border-b ${borderColor} text-center cursor-pointer transition-colors group ${
+                    isDarkMode 
+                      ? 'bg-gray-800/70 hover:bg-gray-700/70 text-gray-300' 
+                      : 'bg-blue-900 hover:bg-blue-800 text-blue-100'
+                  }`}
                 >
                   <div className="flex items-center justify-center">
                     <span>{day}</span>
                     <Eye className="h-3 w-3 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                  <div className={`text-xs mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-blue-200'
+                  }`}>
                     {scheduledClasses.filter(cls => cls.location === location && cls.day === day).length} classes
                   </div>
                 </div>
@@ -685,9 +779,15 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
             </div>
             
             {/* Time slots */}
-            {allTimeSlots.map(time => (
-              <div key={time} className={`grid grid-cols-8 hover:${isDarkMode ? 'bg-gray-700/20' : 'bg-gray-50'} transition-colors`}>
-                <div className={`p-3 text-sm font-medium ${textSecondary} border-b ${borderColor} ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50'} flex items-center`}>
+            {visibleTimeSlots.map(time => (
+              <div key={time} className={`grid grid-cols-8 transition-colors ${
+                isDarkMode ? 'hover:bg-gray-700/20' : 'hover:bg-gray-50'
+              }`}>
+                <div className={`p-3 text-sm font-medium border-b ${borderColor} flex items-center ${
+                  isDarkMode 
+                    ? 'bg-gray-800/30 text-gray-300' 
+                    : 'bg-gray-50 text-gray-700'
+                }`}>
                   <div>
                     <div className="font-semibold flex items-center">
                       {time}
