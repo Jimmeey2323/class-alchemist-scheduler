@@ -440,11 +440,11 @@ function App() {
   const renderMainContent = () => {
     switch (activeView) {
       case 'monthly':
-        return <MonthlyView scheduledClasses={scheduledClasses} csvData={csvData} isDarkMode={isDarkMode} />;
+        return <MonthlyView scheduledClasses={scheduledClasses} csvData={csvData} />;
       case 'yearly':
-        return <YearlyView scheduledClasses={scheduledClasses} csvData={csvData} isDarkMode={isDarkMode} />;
+        return <YearlyView scheduledClasses={scheduledClasses} csvData={csvData} />;
       case 'analytics':
-        return <AnalyticsView scheduledClasses={scheduledClasses} csvData={csvData} isDarkMode={isDarkMode} />;
+        return <AnalyticsView scheduledClasses={scheduledClasses} csvData={csvData} />;
       default:
         return (
           <>
@@ -477,8 +477,6 @@ function App() {
               <TeacherHourTracker 
                 teacherHours={teacherHours} 
                 isDarkMode={isDarkMode}
-                showCards={showTeacherCards}
-                onToggleCards={() => setShowTeacherCards(!showTeacherCards)}
               />
             </div>
 
@@ -832,7 +830,6 @@ function App() {
           onClose={() => setShowExportModal(false)}
           scheduledClasses={scheduledClasses}
           location={activeTab}
-          isDarkMode={isDarkMode}
         />
 
         {/* Studio Settings Modal */}
